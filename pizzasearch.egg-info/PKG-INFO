@@ -1,11 +1,12 @@
-Metadata-Version: 1.0
+Metadata-Version: 1.1
 Name: pizzasearch
 Version: 0.1.dev0
 Summary: UNKNOWN
-Home-page: UNKNOWN
+Home-page: https://github.com/prafulshankar/pizzasearch
 Author: Praful Shankar
 Author-email: praful.shankar@berkeley.edu
 License: Creative Commons Attribution-Noncommercial-Share Alike license
+Download-URL: https://github.com/prafulshankar/pizzasearch/tarball/0.1dev
 Description: # pizzasearch
         CalHacks project
         

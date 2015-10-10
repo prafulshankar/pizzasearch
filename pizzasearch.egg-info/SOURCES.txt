@@ -5,4 +5,5 @@ pizzasearch.egg-info/PKG-INFO
 pizzasearch.egg-info/SOURCES.txt
 pizzasearch.egg-info/dependency_links.txt
 pizzasearch.egg-info/pbr.json
+pizzasearch.egg-info/requires.txt
 pizzasearch.egg-info/top_level.txt
