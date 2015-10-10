@@ -15,4 +15,7 @@ setup(
     dependency_links = [
         "https://pypi.python.org/pypi/piazza-api"
     ],
+    entry_points = {
+        'console_scripts': ['pizza=pizza.pizza:main'],
+    }
 )

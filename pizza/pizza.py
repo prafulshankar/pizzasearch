@@ -64,15 +64,13 @@ def main():
 
 	loginfile = os.path.expanduser("~") + "/.pizza"
 	try: 
-		pkl = pickle.load(open(loginfile,"rb"))
-		data = pkl
-		data['password'] = pkl['password'].decode('rot13')
+		data = pickle.load(open(loginfile,"rb"))
+		data['password'] = data['password'].decode('rot13')
 	except IOError:
 		email = raw_input('Piazza Email: ')
 		password = getpass.getpass()
 		data = {'email': email, 'password': password}
-		pkl = data
-		pkl['password'] = password.encode('rot13')
+		pkl = {'email': email, 'password': password.encode('rot13')}
 		pickle.dump(data, open(loginfile, "wb"))
 
 	piazza = Piazza() 
