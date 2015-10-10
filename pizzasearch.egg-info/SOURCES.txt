@@ -1,5 +1,10 @@
 README.txt
 setup.py
+piazza_api2/__init__.py
+piazza_api2/exceptions.py
+piazza_api2/network.py
+piazza_api2/piazza.py
+piazza_api2/rpc.py
 pizza/__init__.py
 pizza/pizza.py
 pizzasearch.egg-info/PKG-INFO
@@ -7,5 +12,4 @@ pizzasearch.egg-info/SOURCES.txt
 pizzasearch.egg-info/dependency_links.txt
 pizzasearch.egg-info/entry_points.txt
 pizzasearch.egg-info/pbr.json
-pizzasearch.egg-info/requires.txt
 pizzasearch.egg-info/top_level.txt

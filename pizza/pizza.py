@@ -1,4 +1,4 @@
-from piazza_api import Piazza
+from piazza_api2 import Piazza
 
 import sys, getopt
 import argparse
