@@ -68,7 +68,7 @@ def main():
     if not args.force_login: 
         try: 
             pkl = pickle.load(open(loginfile,"rb"))
-            data = {'email', pkl['email'], 'password': pkl['password'].decode('rot13')}
+            data = {'email': pkl['email'], 'password': pkl['password'].decode('rot13')}
         except IOError:
             email = raw_input('Piazza Email: ')
             password = getpass.getpass()
