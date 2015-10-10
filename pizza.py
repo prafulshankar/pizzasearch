@@ -50,8 +50,9 @@ def main():
 	parser.add_argument('-r', '--range', nargs=2)
 	parser.add_argument('-i', '--instructor-only', action='store_true')
 	parser.add_argument('-p', '--posts', action='store_true')
+	parser.add_argument('-l', '--force-login', action='store_true')
 	args = parser.parse_args()
-	# print(args)
+
 	if (args.query is None): 
 		raise(InputError("Query not given!"))
 
@@ -63,11 +64,19 @@ def main():
 	queryObj.bool_pinned(args.posts)
 
 	loginfile = os.path.expanduser("~") + "/.pizza"
-	try: 
-		pkl = pickle.load(open(loginfile,"rb"))
-		data = pkl
-		data['password'] = pkl['password'].decode('rot13')
-	except IOError:
+	if (not args.force_login): 
+		try: 
+			pkl = pickle.load(open(loginfile,"rb"))
+			data = pkl
+			data['password'] = pkl['password'].decode('rot13')
+		except IOError:
+			email = raw_input('Piazza Email: ')
+			password = getpass.getpass()
+			data = {'email': email, 'password': password}
+			pkl = data
+			pkl['password'] = password.encode('rot13')
+			pickle.dump(data, open(loginfile, "wb"))
+	else: 
 		email = raw_input('Piazza Email: ')
 		password = getpass.getpass()
 		data = {'email': email, 'password': password}
@@ -79,7 +88,13 @@ def main():
 	piazza.user_login(data['email'], data['password'])
 	user_prof = piazza.get_user_profile()
 	
-
+	
+	# list classes 
+	print("Choose a Class")
+	counter = 1
+	for c in classes: 
+		print '{0:2d}: {1:s}'.format(counter,c)
+		counter = counter + 1
 
 
 
