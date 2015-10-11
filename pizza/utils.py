@@ -1,6 +1,8 @@
 def filter_plus_ones(followup):
     new_children = []
     plus_ones = 0
+    if 'plus_ones' in followup:
+        plus_ones = followup['plus_ones']
     for child in followup['children']:
         if child['subject'] == '+1' or child['subject'] == '<p>+1</p>':
             plus_ones += 1
