@@ -33,6 +33,7 @@ class FeedProcessor:
             post = self.feed[self.feed_index]
             self.feed_index += 1
             if self.post_allowed(post):
+                self.posts.append(post)
                 return post
     
     def post_allowed(self, post):
