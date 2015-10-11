@@ -5,8 +5,11 @@ import argparse
 import pickle 
 import os 
 import getpass
-
+import html_parse
+import text_formatting 
 from feed_processor import FeedProcessor
+from requests.packages import urllib3
+
 
 class InputError(Exception): 
 
@@ -45,12 +48,8 @@ class QueryObj:
     def __repr__(self): 
         return "Query: " + self.query + "\n List_of_tags: " + str(self.tags) + "\n Time Range " + repr(self.tr_range) + "\n Pinned: " + str(self.pinned) + "\n Inst notes: " + str(self.inst_notes)
 
-
-
-
-
 def main():
-
+    urllib3.disable_warnings()
     parser = argparse.ArgumentParser(description='Process user input for piazza queries')
     parser.add_argument('-q', '--query', nargs="+")
     parser.add_argument('-t', '--tag', nargs=1) 
@@ -97,21 +96,35 @@ def main():
             info = '(inactive) ' + info
         print '{0:2d}: {1:s}'.format(counter, info)
         counter = counter + 1
-        
+    
+
     index = raw_input('Class Number: ')
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
-    
-    # for i in range(0, 1):
-    post = feed_processor.next_post()
-    if post is None:
-        print "No post."
-    else:
-        print post
+    post = None 
 
-    
+    summary_storage = [] 
+    id_storage = []
 
-    
+    for i in range(0, 3): 
+        post = feed_processor.next_post()
+        if post is None:
+            print "No post."
+        else:
+            summary_storage.append((text_formatting.bold(html_parse.format_unicode_html(post['subject']).replace("\n", "")), \
+            html_parse.format_unicode_html(post['content_snipet'].replace("\n", "")+ "...")))
+            full_post = network.get_post(post['id'])
+            print(html_parse.format_unicode_html(full_post['history'][0]['subject']))
+            print(html_parse.format_unicode_html(full_post['history'][0]['content']))
+            for followup in full_post['children']:  
+                print(html_parse.format_unicode_html(followup['subject']))
+                for followup_child in followup['children']:
+                    if (followup_child['subject']):
+                        print("\t" + html_parse.format_unicode_html(followup_child['subject']))
+
+    # print(id_storage)
+    # IF ENTER: 
+        
 
 if __name__ == '__main__':
     main()
