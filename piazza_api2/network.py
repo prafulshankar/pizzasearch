@@ -249,7 +249,7 @@ class Network(object):
         """
         result = self._rpc.get_users(user_ids=user_ids)
         for user in result:
-            self.users[user['uid']] = user['name']
+            self.users[user['id']] = user['name']
         return
 
     def iter_users(self, user_ids):
