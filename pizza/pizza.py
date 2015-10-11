@@ -2,24 +2,24 @@ from piazza_api2 import Piazza
 
 import sys, getopt
 import argparse
-import pickle 
-import os 
+import pickle
+import os
 import getpass
 import html_parse
-import text_formatting 
+import text_formatting
 from feed_processor import FeedProcessor
 from requests.packages import urllib3
 
 
-class InputError(Exception): 
+class InputError(Exception):
 
-    def __init__(self, msg): 
+    def __init__(self, msg):
         self.msg = msg
 
     def __str__(self):
         return self.msg
 
-class QueryObj: 
+class QueryObj:
 
     def add_query(self, query):
         if query is None:
@@ -30,29 +30,29 @@ class QueryObj:
     def add_tag(self, tag):
         self.tag = tag
 
-    def add_time_range(self, range_list): 
+    def add_time_range(self, range_list):
         if (range_list is not None):
             self.tr_range = range(int(range_list[0]), int(range_list[1]))
         else:
             self.tr_range = None
 
-    def bool_pinned(self, pinned): 
-        self.pinned = pinned 
+    def bool_pinned(self, pinned):
+        self.pinned = pinned
 
-    def bool_inst_notes(self, inst): 
+    def bool_inst_notes(self, inst):
         self.inst_notes = inst
-            
+
     def bool_following(self, follow):
         self.following = follow
 
-    def __repr__(self): 
+    def __repr__(self):
         return "Query: " + self.query + "\n List_of_tags: " + str(self.tags) + "\n Time Range " + repr(self.tr_range) + "\n Pinned: " + str(self.pinned) + "\n Inst notes: " + str(self.inst_notes)
 
 def main():
     urllib3.disable_warnings()
     parser = argparse.ArgumentParser(description='Process user input for piazza queries')
     parser.add_argument('-q', '--query', nargs="+")
-    parser.add_argument('-t', '--tag', nargs=1) 
+    parser.add_argument('-t', '--tag', nargs=1)
     parser.add_argument('-r', '--range', nargs=2)
     parser.add_argument('-i', '--instructor-only', action='store_true')
     parser.add_argument('-p', '--pinned', action='store_true')
@@ -69,9 +69,9 @@ def main():
     queryObj.bool_following(args.following)
 
     loginfile = os.path.expanduser("~") + "/.pizza"
-    
-    if not args.force_login: 
-        try: 
+
+    if not args.force_login:
+        try:
             pkl = pickle.load(open(loginfile,"rb"))
             data = {'email': pkl['email'], 'password': pkl['password'].decode('rot13')}
         except IOError:
@@ -81,32 +81,32 @@ def main():
             pkl = {'email': email, 'password': password.encode('rot13')}
             pickle.dump(pkl, open(loginfile, "wb"))
 
-    piazza = Piazza() 
+    piazza = Piazza()
     piazza.user_login(data['email'], data['password'])
     user_status = piazza.get_user_status()
-    
+
     classes = user_status['networks']
     classes = sorted(classes, key=lambda k: k['status'])
-    # list classes 
+    # list classes
     print("Choose a Class")
     counter = 1
-    for c in classes: 
+    for c in classes:
         info = c['name']
         if c['status'] == 'inactive':
             info = '(inactive) ' + info
         print '{0:2d}: {1:s}'.format(counter, info)
         counter = counter + 1
-    
+
 
     index = raw_input('Class Number: ')
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
-    post = None 
+    post = None
 
-    summary_storage = [] 
+    summary_storage = []
     id_storage = []
 
-    for i in range(0, 3): 
+    for i in range(0, 3):
         post = feed_processor.next_post()
         if post is None:
             print "No post."
@@ -116,16 +116,27 @@ def main():
             full_post = network.get_post(post['id'])
             print(html_parse.format_unicode_html(full_post['history'][0]['subject']))
             print(html_parse.format_unicode_html(full_post['history'][0]['content']))
-            for followup in full_post['children']:  
-                print(html_parse.format_unicode_html(followup['subject']))
+
+
+            for followup in full_post['children']:
+                # if (full_post['change_log'][p]['anon'] is not 'no'):
+                #     name = network.get_user_name(full_post['change_log'][p]['uid'])
+                # else:
+                #     name = 'Anonymous'
+                print(html_parse.format_unicode_html(name + followup['subject']))
+                # p += 1
                 for followup_child in followup['children']:
                     if (followup_child['subject']):
-                        print("\t" + html_parse.format_unicode_html(followup_child['subject']))
+                        # if (full_post['change_log'][p]['anon'] is not 'no'):
+                        #     name = network.get_user_name(full_post['change_log'][p]['uid'])
+                        # else:
+                        #     name = 'Anonymous'
+                        print("\t" + html_parse.format_unicode_html(network.get_user_name(full_post['change_log'][p]['uid']) + followup_child['subject']))
+                        # p += 1
 
     # print(id_storage)
-    # IF ENTER: 
-        
+    # IF ENTER:
+
 
 if __name__ == '__main__':
     main()
-
