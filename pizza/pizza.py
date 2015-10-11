@@ -9,6 +9,7 @@ import html_parse
 import text_formatting
 from feed_processor import FeedProcessor
 from requests.packages import urllib3
+import utils
 
 
 class InputError(Exception):
