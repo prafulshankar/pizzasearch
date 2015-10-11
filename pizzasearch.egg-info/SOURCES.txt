@@ -10,6 +10,7 @@ pizza/curses_viewer.py
 pizza/feed_processor.py
 pizza/html_parse.py
 pizza/pizza.py
+pizza/post_viewer.py
 pizza/summary_viewer.py
 pizza/text_formatting.py
 pizza/utils.py

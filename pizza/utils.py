@@ -20,27 +20,31 @@ def process_post(post):
         'id': post['id'],
         'type': post['type'],
         'folders': post['folders'],
-        'pinned': 'pin' in post['tags']
+        'pinned': 'pin' in post['tags'],
+        'uid': None if 'uid' not in post['history'][0] else post['history'][0]['uid'],
+        'subject': post['history'][0]['subject'],
+        'contents': post['history'][0]['content']
     }
+    data['student_answer'] = None
+    data['instructor_answer'] = None
     if data['type'] == 'question':
-        data['student_answer'] = None
-        data['instructor_answer'] = None
         followups = []
         for child in post['children']:
             if child['type'] == 'i_answer':
                 data['instructor_answer'] = {
                     'raw': child,
-                    'contents': child['history'][0]['contents'],
-                    'uid': child['history'][0]['uid']
+                    'contents': child['history'][0]['content'],
+                    'uid': None if 'uid' not in child['history'][0] else child['history'][0]['uid']
                 }
             elif child['type'] == 's_answer':
                 data['student_answer'] = {
                     'raw': child,
-                    'contents': child['history'][0]['contents'],
-                    'uid': child['history'][0]['uid']
+                    'contents': child['history'][0]['content'],
+                    'uid': None if 'uid' not in child['history'][0] else child['history'][0]['uid']
                 }
             else:
                 followups.append(child)
+        data['followups'] = followups
     else:
         data['followups'] = post['children']
     return data
