@@ -21,18 +21,24 @@ def render(pads, stdscr):
         i += 1
     stdscr.refresh()
 
-def summary_pad(subject, contents, stdscr):
+def summary_pad(subject, contents, stdscr, reverse=False):
     width = stdscr.getmaxyx()[1]
     subject_lines = textwrap.wrap(subject, width - 2)
     lines = textwrap.wrap(contents, width - 2)
     height = len(subject_lines) + len(lines) + 2
 
     pad = curses.newpad(height, width)
+    pad.bkgd(' ', curses.A_REVERSE if reverse else curses.A_NORMAL)
     pad.addstr("\n")
+    bold_val = curses.A_BOLD
+    norm_val = curses.A_NORMAL
+    if reverse:
+        bold_val = bold_val | curses.A_REVERSE
+        norm_val = norm_val | curses.A_REVERSE
     for line in subject_lines:
-        pad.addstr(" " + line + "\n", curses.A_BOLD)
+        pad.addstr(" " + line + "\n", bold_val)
     for line in lines:
-        pad.addstr(" " + line + "\n")
+        pad.addstr(" " + line + "\n", norm_val)
     pad.border()
     return pad
 
@@ -83,6 +89,7 @@ def view_summaries(feed):
     # Create a sub-window
     pads = []
     summaries = []
+    data = []
     unsaved_post = None
     height_sum = 0
     window_height = stdscr.getmaxyx()[0]
@@ -98,6 +105,7 @@ def view_summaries(feed):
         height = len(subject_lines) + len(lines) + 2
         if height_sum + height <= window_height*2:
             summaries.append(post)
+            data.append((subject, contents))
             height_sum += height
             pads.append(summary_pad(subject, contents, stdscr))
         else:
@@ -107,7 +115,8 @@ def view_summaries(feed):
     i = 0
     stdscr.erase()
     stdscr.refresh()
-    pads[0].bkgd(' ', curses.A_REVERSE)
+    if len(pads) > 0:
+        pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
     render(pads, stdscr)
     stdscr.nodelay(1) # getch is non-blocking
     c = 'j'
@@ -126,25 +135,26 @@ def view_summaries(feed):
                 subject = html_parse.format_unicode_html(post['subject'])
                 contents = html_parse.format_unicode_html(post['content_snipet'])
                 summaries.append(post)
+                data.append((subject, contents))
                 pads.append(summary_pad(subject, contents, stdscr))
-            pads[i].bkgd(' ', curses.A_NORMAL)
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
             i += 1
             if i >= len(pads):
                 i = len(pads) - 1
             stdscr.erase()
             stdscr.refresh()
-            pads[i].bkgd(' ', curses.A_REVERSE)
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
             render(pads[i:], stdscr)
     
         # Scroll up
         elif c == ord('k') or c == curses.KEY_UP:
-            pads[i].bkgd(' ', curses.A_NORMAL)
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
             i -= 1
             if(i < 0):
                 i = 0
             stdscr.erase()
             stdscr.refresh()
-            pads[i].bkgd(' ', curses.A_REVERSE)
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
             render(pads[i:], stdscr)
     
         # Check for window resize
