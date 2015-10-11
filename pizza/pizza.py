@@ -103,7 +103,7 @@ def main():
     index = raw_input('Class Number: ')
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
-    summary_viewer.view_summaries(feed_processor)
+    summary_viewer.view_summaries(feed_processor, network)
     """post = None
 
     summary_storage = []

@@ -54,7 +54,7 @@ def pad_refresh(pad):
     x2 = x1 + size[1]
 
     pad.refresh(0, 0, y1, x1, y2, x2)
-    
+
 def remake_pads(summaries, stdscr):
     new_pads = []
     for i in range(0, len(summaries)):
@@ -62,7 +62,7 @@ def remake_pads(summaries, stdscr):
         contents = html_parse.format_unicode_html(summaries[i]['content_snipet'])
         new_pads.append(summary_pad(subject, contents, stdscr))
     return new_pads
-    
+
 
 # Shift a window up or down (down is positive)
 def shift(pad, offset, stdscr):
@@ -79,15 +79,15 @@ def mvpad(pad, new_y1, new_x1):
     new_y2 = stdscr.getmaxyx()[0]
     new_x2 = stdscr.getmaxyx()[1]
     pad.refresh(0, 0, new_y1, new_x1, new_y2, new_x2)
-    
-def view_summaries(feed):
+
+def view_summaries(feed, network):
     stdscr = curses.initscr()
     curses.start_color()
     curses.use_default_colors()
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(1)
-    
+
     # Create a sub-window
     pads = []
     summaries = []
@@ -124,11 +124,11 @@ def view_summaries(feed):
     c = 'j'
     while True:
         c = stdscr.getch()
-    
+
         # Quit the program
         if c == ord('q'):
             break
-    
+
         # Scroll down
         elif c == ord('j') or c == curses.KEY_DOWN:
             post = unsaved_post if unsaved_post else feed.next_post()
@@ -147,7 +147,7 @@ def view_summaries(feed):
             stdscr.refresh()
             pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
             render(pads[i:], stdscr)
-    
+
         # Scroll up
         elif c == ord('k') or c == curses.KEY_UP:
             pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
@@ -158,14 +158,14 @@ def view_summaries(feed):
             stdscr.refresh()
             pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
             render(pads[i:], stdscr)
-    
+
         # Check for window resize
         if c == curses.KEY_RESIZE:
             stdscr.erase()
             stdscr.refresh()
             pads = remake_pads(summaries, stdscr)
             render(pads[i:], stdscr)
-    
+
     # Termination
     curses.nocbreak()
     stdscr.keypad(0)
