@@ -22,6 +22,8 @@ def render(pads, stdscr):
     stdscr.refresh()
 
 def summary_pad(subject, contents, stdscr, reverse=False):
+    subject = subject.replace('<b>', '').replace('</b>', '')
+    contents = contents.replace('<b>', '').replace('</b>', '')
     width = stdscr.getmaxyx()[1]
     subject_lines = textwrap.wrap(subject, width - 2)
     lines = textwrap.wrap(contents, width - 2)

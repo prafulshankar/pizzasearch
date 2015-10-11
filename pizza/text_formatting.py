@@ -1,5 +1,8 @@
 def color_format(string, i):
-    return "\033[" + str(i) + "m" + string + "\033[0m"
+    #return "\033[" + str(i) + "m" + string + "\033[0m"
+    if i == 1:
+        return "<b>"+string+"</b>"
+    return string
 
 def create_func(i):
     def func(string):
