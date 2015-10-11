@@ -234,7 +234,6 @@ class Network(object):
         """
         if uid not in self.users:
             result = self.get_users([uid])
-            self.users[uid] = result[0]['name']
         return self.users[uid]
 
     def get_users(self, user_ids):
@@ -248,7 +247,10 @@ class Network(object):
             of dicts containing user data.
         :rtype: list
         """
-        return self._rpc.get_users(user_ids=user_ids)
+        result = self._rpc.get_users(user_ids=user_ids)
+        for user in result:
+            self.users[user['uid']] = user['name']
+        return
 
     def iter_users(self, user_ids):
         """Same as ``Network.get_users``, but returns an iterable instead
