@@ -2,7 +2,7 @@ import curses
 import time
 import textwrap
 import text_formatting
-
+import post_viewer
 import html_parse
 
 def render(pads, stdscr):
@@ -123,11 +123,22 @@ def view_summaries(feed, network):
     stdscr.nodelay(1) # getch is non-blocking
     c = 'j'
     while True:
+        #curses.nonl() # Allows us to read newlines
+        #curses.raw() # Characters are passed one by one, no buffering
         c = stdscr.getch()
 
         # Quit the program
         if c == ord('q'):
             break
+
+        # Check for ENTER
+        elif c == ord('\n') or c == ord('g'):
+            stdscr.clear()
+            stdscr.refresh()
+            post_summary_obj = summaries[i]
+            id_num = post_summary_obj['id']
+            post_obj = network.get_post(id_num)
+            post_viewer.view_post(post_obj, network, stdscr)
 
         # Scroll down
         elif c == ord('j') or c == curses.KEY_DOWN:
@@ -160,7 +171,7 @@ def view_summaries(feed, network):
             render(pads[i:], stdscr)
 
         # Check for window resize
-        if c == curses.KEY_RESIZE:
+        if c == ord('\n'):
             stdscr.erase()
             stdscr.refresh()
             pads = remake_pads(summaries, stdscr)
