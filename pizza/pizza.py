@@ -102,13 +102,16 @@ def main():
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
     
-    for i in range(0, 5):
-        post = feed_processor.next_post()
-        if post is None:
-            print "No post."
-        else:
-            print post['subject']
+    # for i in range(0, 1):
+    post = feed_processor.next_post()
+    if post is None:
+        print "No post."
+    else:
+        print post
 
+    
+
+    
 
 if __name__ == '__main__':
     main()
