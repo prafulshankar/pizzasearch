@@ -6,6 +6,7 @@ piazza_api2/network.py
 piazza_api2/piazza.py
 piazza_api2/rpc.py
 pizza/__init__.py
+pizza/feed_processor.py
 pizza/pizza.py
 pizzasearch.egg-info/PKG-INFO
 pizzasearch.egg-info/SOURCES.txt
