@@ -10,6 +10,7 @@ import text_formatting
 from feed_processor import FeedProcessor
 from requests.packages import urllib3
 import utils
+import summary_viewer
 
 
 class InputError(Exception):
@@ -102,7 +103,8 @@ def main():
     index = raw_input('Class Number: ')
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
-    post = None
+    summary_viewer.view_summaries(feed_processor)
+    """post = None
 
     summary_storage = []
     id_storage = []
@@ -133,7 +135,7 @@ def main():
                         # else:
                         #     name = 'Anonymous'
                         print("\t" + html_parse.format_unicode_html(network.get_user_name(full_post['change_log'][p]['uid']) + followup_child['subject']))
-                        # p += 1
+                        # p += 1"""
 
     # print(id_storage)
     # IF ENTER:

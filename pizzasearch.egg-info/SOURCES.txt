@@ -6,9 +6,11 @@ piazza_api2/network.py
 piazza_api2/piazza.py
 piazza_api2/rpc.py
 pizza/__init__.py
+pizza/curses_viewer.py
 pizza/feed_processor.py
 pizza/html_parse.py
 pizza/pizza.py
+pizza/summary_viewer.py
 pizza/text_formatting.py
 pizza/utils.py
 pizzasearch.egg-info/PKG-INFO
