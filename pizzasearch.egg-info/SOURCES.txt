@@ -1,4 +1,3 @@
-README.txt
 setup.py
 piazza_api2/__init__.py
 piazza_api2/exceptions.py

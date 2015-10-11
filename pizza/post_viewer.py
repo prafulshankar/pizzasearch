@@ -5,7 +5,7 @@ import utils
 import textwrap
 import text_formatting
 
-def post_pad(post, network, stdscr):
+def post_pad(post, network, stdscr, i):
     lines = []
     width = stdscr.getmaxyx()[1]
     bold = curses.A_BOLD
@@ -57,16 +57,19 @@ def post_pad(post, network, stdscr):
                     lines.append(("    " + line, norm))
         lines.append(("", norm))
     
-    pad = curses.newpad(len(lines) + 2, width)
+    pad = curses.newpad(min(len(lines) + 2, stdscr.getmaxyx()[0]), width)
     pad.addstr("\n")
-    for item in lines:
-        contents, style = item
+    counter = 2
+    for index in range(i, len(lines)):
+        contents, style = lines[index]
         pad.addstr(" " + contents + "\n", style)
-        
+        counter += 1
+        if counter >= stdscr.getmaxyx()[0]:
+            return pad
     return pad
 
 def render(pad, i, stdscr):
-    pad.refresh(i, 0, 0, 0, -i + pad.getmaxyx()[0], pad.getmaxyx()[1])
+    pad.refresh(0, 0, 0, 0, stdscr.getmaxyx()[0], pad.getmaxyx()[1])
     stdscr.refresh()
 
 def view_post(post, network, stdscr):
@@ -91,7 +94,7 @@ def view_post(post, network, stdscr):
                 uid_set.add(reply['uid'])
     network.get_users(list(uid_set))
     
-    pad = post_pad(processed, network, stdscr)
+    pad = post_pad(processed, network, stdscr, 0)
     
     i = 0
     
@@ -111,6 +114,7 @@ def view_post(post, network, stdscr):
             i += 1
             #if i >= len(pad):
             #    i = len(pads) - 1
+            pad = post_pad(processed, network, stdscr, i)
             stdscr.erase()
             stdscr.refresh()
             render(pad, i, stdscr)
@@ -120,13 +124,14 @@ def view_post(post, network, stdscr):
             i -= 1
             if(i < 0):
                 i = 0
+            pad = post_pad(processed, network, stdscr, i)
             stdscr.erase()
             stdscr.refresh()
             render(pad, i, stdscr)
 
         # Check for window resize
         if c == curses.KEY_RESIZE:
+            pad = post_pad(processed, network, stdscr, i)
             stdscr.erase()
             stdscr.refresh()
-            pad = post_pad(processed, network, stdscr)
             render(pad, i, stdscr)

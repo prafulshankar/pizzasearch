@@ -1,2 +1,0 @@
-# pizzasearch
-CalHacks project

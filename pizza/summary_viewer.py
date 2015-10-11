@@ -124,6 +124,7 @@ def view_summaries(feed, network):
     render(pads, stdscr)
     stdscr.nodelay(1) # getch is non-blocking
     c = 'j'
+    error = None
     try:
         while True:
             #curses.nonl() # Allows us to read newlines
@@ -191,10 +192,13 @@ def view_summaries(feed, network):
                 pads = remake_pads(summaries, stdscr)
                 render(pads[i:], stdscr)
     except:
-        traceback.print_exc()
-
+        error = traceback.format_exc()
+    
     # Termination
     curses.nocbreak()
     stdscr.keypad(0)
     curses.echo()
     curses.endwin()
+    
+    if error:
+        print error

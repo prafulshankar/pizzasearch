@@ -28,6 +28,8 @@ def format_unicode_html(unicode_string):
                 old_string = tag.string
                 new_string = bold(old_string)
                 tag.replace_with(new_string)
+            elif(str(tag.name) == "img"):
+                tag.replace_with("IMAGE["+tag['src']+"]");
             elif(str(tag.name) == "a"):
                 url = str(tag['href'])
                 display_name = cyan(str(tag.string))
