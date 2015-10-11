@@ -53,6 +53,7 @@ class Network(object):
         self._nid = network_id
         self._rpc = PiazzaRPC(network_id=self._nid)
         self._rpc.cookies = cookies
+        self.users = {}
 
         ff = namedtuple('FeedFilters', ['unread', 'following', 'folder'])
         self._feed_filters = ff(UnreadFilter, FollowingFilter, FolderFilter)
@@ -227,6 +228,14 @@ class Network(object):
     #########
     # Users #
     #########
+
+    def get_user_name(self, uid):
+        """Gets a user's name from their uid
+        """
+        if uid not in self.users:
+            result = self.get_users([uid])
+            self.users[uid] = result[0]['name']
+        return self.users[uid]
 
     def get_users(self, user_ids):
         """Get a listing of data for specific users ``user_ids`` in
