@@ -27,7 +27,7 @@ def wrapped_pad(string):
     pad = curses.newpad(height, width)
     pad.addstr("\n")
     for line in lines:
-        pad.addstr(" " + line + "\n")
+        pad.addstr(" " + line + "\n", curses.color_pair(1))
     pad.border()
     return pad
 
@@ -65,6 +65,7 @@ curses.noecho()
 curses.cbreak()
 stdscr.keypad(1)
 
+curses.init_pair(1, curses.COLOR_RED, curses.COLOR_WHITE)
 stdscr.addstr(0, 0, "This is dim text\n",
               curses.A_DIM)
 stdscr.addstr("This is regular text\n")
@@ -94,7 +95,7 @@ while(1):
         break
 
     # Scroll down
-    elif c == ord('j'):
+    elif c == ord('j') or c == curses.KEY_DOWN:
         pads[i].bkgd(' ', curses.A_NORMAL)
         i += 1
         if i >= len(pads):
@@ -105,7 +106,7 @@ while(1):
         render(pads[i:])
 
     # Scroll up
-    elif c == ord('k'):
+    elif c == ord('k') or c == curses.KEY_UP:
         pads[i].bkgd(' ', curses.A_NORMAL)
         i -= 1
         if(i < 0):
