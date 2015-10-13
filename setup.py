@@ -12,7 +12,7 @@ setup(
     url = "https://github.com/prafulshankar/pizzasearch",
     download_url="https://github.com/prafulshankar/pizzasearch/tarball/0.1dev",
     install_requires=[
-      'beautifulsoup4',
+      'html2text', 'requests'
     ],
     entry_points = {
         'console_scripts': ['pizza=pizza.pizza:main'],

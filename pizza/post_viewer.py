@@ -1,75 +1,80 @@
 import time
 import curses
-import html_parse
 import utils
 import textwrap
 import text_formatting
+import subprocess
+import platform
 
-def post_pad(post, network, stdscr, i):
+line_count = 1000
+
+def wrap(string, width):
+    lines = []
+    for section in string.split("\n"):
+        lines.extend(textwrap.wrap(section, width))
+    return lines
+
+def post_pad(post, network, stdscr):
     lines = []
     width = stdscr.getmaxyx()[1]
     bold = curses.A_BOLD
     norm = curses.A_NORMAL
-    subject = html_parse.format_unicode_html(post['subject'])
-    for line in textwrap.wrap(subject, width - 2): lines.append((line, bold))
-    contents = html_parse.format_unicode_html(post['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
-    for line in textwrap.wrap(contents, width - 2): lines.append((line, norm))
+    #lines.append((" ", norm))
+    subject = utils.format_html(post['subject'])
+    for line in wrap(subject, width - 2): lines.append((line, bold))
+    contents = utils.format_html(post['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
+    for line in wrap(contents, width - 2): lines.append((line, norm))
     author = network.get_user_name(post['uid']).encode('ascii', 'ignore') if post['uid'] else 'Anonymous'
     right_author = " "*(width-len(author)-4) + '- ' + author
     lines.append((right_author, norm))
     if post['student_answer']:
         lines.append(("Student Answer:", bold))
         answer = post['student_answer']
-        contents = html_parse.format_unicode_html(answer['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
-        for line in textwrap.wrap(contents, width - 2): lines.append((line, norm))
+        contents = utils.format_html(answer['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
+        for line in wrap(contents, width - 2): lines.append((line, norm))
         author = network.get_user_name(answer['uid']).encode('ascii', 'ignore') if answer['uid'] else 'Anonymous'
         right_author = " "*(width-len(author)-4) + '- ' + author
         lines.append((right_author, norm))
     if post['instructor_answer']:
         lines.append(("Instructor Answer:", bold))
         answer = post['instructor_answer']
-        contents = html_parse.format_unicode_html(answer['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
-        for line in textwrap.wrap(contents, width - 2): lines.append((line, norm))
+        contents = utils.format_html(answer['contents']).replace('___bold_start___', '').replace('___bold_end___', '')
+        for line in wrap(contents, width - 2): lines.append((line, norm))
         author = network.get_user_name(answer['uid']).encode('ascii', 'ignore') if answer['uid'] else 'Anonymous'
         right_author = " "*(width-len(author)-4) + '- ' + author
         lines.append((right_author, norm))
     if len(post['followups']) > 0:
         lines.append(("Followup Discussions:", bold))
     for followup in post['followups']:
-        subject = html_parse.format_unicode_html(followup['subject'])
+        subject = utils.format_html(followup['subject'])
         hasUID = 'uid' in followup and followup['uid']
         author = network.get_user_name(followup['uid']) if hasUID else 'Anonymous'
         entry = subject + " (" + author.encode('ascii', 'ignore') + ")"
         if followup['plus_ones'] > 0:
             entry += ' +' + str(followup['plus_ones'])
-        for line in textwrap.wrap(entry, width - 2): lines.append((line, norm))
+        for line in wrap(entry, width - 2): lines.append((line, norm))
         for reply in followup['children']:
-            subject = html_parse.format_unicode_html(reply['subject'])
+            subject = utils.format_html(reply['subject'])
             hasUID = 'uid' in reply and reply['uid']
             author = network.get_user_name(reply['uid']) if hasUID else 'Anonymous'
             entry = subject + " (" + author.encode('ascii', 'ignore') + ")"
             first = True
-            for line in textwrap.wrap(entry, width - 6): 
+            for line in wrap(entry, width - 9): 
                 if first:
-                    lines.append(("   " + line, norm))
+                    lines.append(("     " + line, norm))
                     first = False
                 else:
-                    lines.append(("    " + line, norm))
+                    lines.append(("       " + line, norm))
         lines.append(("", norm))
     
-    pad = curses.newpad(min(len(lines) + 2, stdscr.getmaxyx()[0]), width)
-    pad.addstr("\n")
-    counter = 2
-    for index in range(i, len(lines)):
-        contents, style = lines[index]
-        pad.addstr(" " + contents + "\n", style)
-        counter += 1
-        if counter >= stdscr.getmaxyx()[0]:
-            return pad
+    pad = curses.newpad(len(lines) + 1, width)
+    for item in lines:
+        contents, style = item
+        pad.addstr("\n " + contents, style)
     return pad
 
 def render(pad, i, stdscr):
-    pad.refresh(0, 0, 0, 0, stdscr.getmaxyx()[0], pad.getmaxyx()[1])
+    pad.refresh(i, 0, 0, 0, stdscr.getmaxyx()[0] - 1, stdscr.getmaxyx()[1])
     stdscr.refresh()
 
 def view_post(post, network, stdscr):
@@ -94,13 +99,13 @@ def view_post(post, network, stdscr):
                 uid_set.add(reply['uid'])
     network.get_users(list(uid_set))
     
-    pad = post_pad(processed, network, stdscr, 0)
+    pad = post_pad(processed, network, stdscr)
     
     i = 0
-    
-    render(pad, i, stdscr)
-    
+
     while True:
+        #pad = post_pad(processed, network, stdscr, i)
+        render(pad, i, stdscr)
         #curses.nonl() # Allows us to read newlines
         #curses.raw() # Characters are passed one by one, no buffering
         c = stdscr.getch()
@@ -108,30 +113,30 @@ def view_post(post, network, stdscr):
         # Quit the program
         if c == ord('q') or c == curses.KEY_BACKSPACE:
             break
+        
+        elif c == ord('i'):
+            url = "https://piazza.com/class/" + network._nid + "?cid=" + post['id']
+            plat = platform.system()
+            if plat == "Windows":
+                subprocess.Popen(["explorer", url])
+            elif plat == "Darwin":
+                subprocess.Popen(["open", url])
+            elif plat == "Linux":
+                subprocess.Popen(["x-www-browser", url])
 
         # Scroll down
         elif c == ord('j') or c == curses.KEY_DOWN:
-            i += 1
-            #if i >= len(pad):
-            #    i = len(pads) - 1
-            pad = post_pad(processed, network, stdscr, i)
-            stdscr.erase()
-            stdscr.refresh()
-            render(pad, i, stdscr)
+            if i < pad.getmaxyx()[0] - stdscr.getmaxyx()[0]:
+                i += 1
 
         # Scroll up
         elif c == ord('k') or c == curses.KEY_UP:
-            i -= 1
-            if(i < 0):
-                i = 0
-            pad = post_pad(processed, network, stdscr, i)
-            stdscr.erase()
-            stdscr.refresh()
-            render(pad, i, stdscr)
+            if (i > 0):
+                i -= 1
 
         # Check for window resize
         if c == curses.KEY_RESIZE:
-            pad = post_pad(processed, network, stdscr, i)
             stdscr.erase()
             stdscr.refresh()
-            render(pad, i, stdscr)
+            pad = post_pad(processed, network, stdscr)
+            
