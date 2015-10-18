@@ -5,7 +5,6 @@ import argparse
 import pickle
 import os
 import getpass
-import text_formatting
 import curses
 from feed_processor import FeedProcessor
 from requests.packages import urllib3
