@@ -1,7 +1,6 @@
 import curses
 import time
 import textwrap
-import text_formatting
 import post_viewer
 import utils
 import subprocess

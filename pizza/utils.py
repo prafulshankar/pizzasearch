@@ -1,4 +1,3 @@
-import html_parse
 import html2text
 
 def format_html(unicode_string):

@@ -2,7 +2,6 @@ import time
 import curses
 import utils
 import textwrap
-import text_formatting
 import subprocess
 import platform
 
