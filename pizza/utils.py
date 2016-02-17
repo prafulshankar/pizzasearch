@@ -1,4 +1,15 @@
-import html_parse
+import html2text
+
+def format_html(unicode_string):
+    try:
+        h = html2text.HTML2Text()
+        h.body_width = 0
+        text = h.handle(unicode_string)
+        text = text.encode('ascii', 'ignore').strip()
+        text = text.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+        return text
+    except:
+        return unicode_string
 
 def filter_plus_ones(followup):
     new_children = []

@@ -1,14 +1,20 @@
 import curses
 import time
 import textwrap
-import text_formatting
 import post_viewer
-import html_parse
-import traceback
+import utils
 import subprocess
 import platform
 
-def render(pads, stdscr):
+at_bottom = False
+last_index = -1
+
+def render(all_pads, index, stdscr):
+    global at_bottom, last_index
+    index = max(0, index - 1)
+    if at_bottom and index >= last_index:
+        index = last_index
+    pads = all_pads[index:]
     window_nums = stdscr.getmaxyx()
     window_height = window_nums[0]
     window_width = window_nums[1]
@@ -22,6 +28,16 @@ def render(pads, stdscr):
                         pad_x + pads[i].getmaxyx()[1])
         pad_y = pad_y + pads[i].getmaxyx()[0]
         i += 1
+    at_bottom = i == len(pads)
+    last_index = index
+    if i < len(pads):
+        pads[i].refresh(0, 0, pad_y, pad_x,
+                    min(pad_y + pads[i].getmaxyx()[0], window_height - 1),
+                    pad_x + pads[i].getmaxyx()[1])
+    elif pad_y < window_height:
+        pad = curses.newpad(window_height, window_width)
+        pad.refresh(0, 0, pad_y, pad_x, window_height - 1, window_width - 1)
+        
     stdscr.refresh()
 
 def summary_pad(subject, contents, stdscr, reverse=False):
@@ -30,7 +46,6 @@ def summary_pad(subject, contents, stdscr, reverse=False):
     subject_lines = textwrap.wrap(subject, width - 2)
     lines = textwrap.wrap(contents, width - 2)
     height = len(subject_lines) + len(lines) + 2
-
     pad = curses.newpad(height, width)
     pad.bkgd(' ', curses.A_REVERSE if reverse else curses.A_NORMAL)
     pad.addstr("\n")
@@ -57,12 +72,13 @@ def pad_refresh(pad):
 
     pad.refresh(0, 0, y1, x1, y2, x2)
 
-def remake_pads(summaries, stdscr):
+def remake_pads(summaries, stdscr, index):
     new_pads = []
     for i in range(0, len(summaries)):
-        subject = html_parse.format_unicode_html(summaries[i]['subject'])
-        contents = html_parse.format_unicode_html(summaries[i]['content_snipet'])
-        new_pads.append(summary_pad(subject, contents, stdscr))
+        subject = utils.format_html(summaries[i]['subject'])
+        contents = utils.format_html(summaries[i]['content_snipet'])
+        reverse = i == index
+        new_pads.append(summary_pad(subject, contents, stdscr, reverse))
     return new_pads
 
 
@@ -82,17 +98,14 @@ def mvpad(pad, new_y1, new_x1):
     new_x2 = stdscr.getmaxyx()[1]
     pad.refresh(0, 0, new_y1, new_x1, new_y2, new_x2)
 
-def view_summaries(feed, network):
-    stdscr = curses.initscr()
-    curses.start_color()
-    curses.use_default_colors()
-    curses.noecho()
-    curses.cbreak()
-    stdscr.keypad(1)
+data = []
 
-    # Create a sub-window
+def view_summaries(stdscr, feed, network):
+    curses.use_default_colors()
+    
     pads = []
     summaries = []
+    global data
     data = []
     unsaved_post = None
     height_sum = 0
@@ -102,8 +115,8 @@ def view_summaries(feed, network):
         post = feed.next_post()
         if not post:
             break
-        subject = html_parse.format_unicode_html(post['subject'])
-        contents = html_parse.format_unicode_html(post['content_snipet'])
+        subject = utils.format_html(post['subject'])
+        contents = utils.format_html(post['content_snipet'])
         subject_lines = textwrap.wrap(subject, window_width - 2)
         lines = textwrap.wrap(contents, window_width - 2)
         height = len(subject_lines) + len(lines) + 2
@@ -121,84 +134,60 @@ def view_summaries(feed, network):
     stdscr.refresh()
     if len(pads) > 0:
         pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
-    render(pads, stdscr)
-    stdscr.nodelay(1) # getch is non-blocking
-    c = 'j'
-    error = None
-    try:
-        while True:
-            #curses.nonl() # Allows us to read newlines
-            #curses.raw() # Characters are passed one by one, no buffering
-            c = stdscr.getch()
-    
-            # Quit the program
-            if c == ord('q') or c == curses.KEY_BACKSPACE:
-                break
-            
-            elif c == ord('i'):
-                url = "https://piazza.com/class/" + network._nid + "?cid=" + summaries[i]['id']
-                plat = platform.system()
-                if plat == "Windows":
-                    subprocess.Popen(["explorer", url])
-                elif plat == "Darwin":
-                    subprocess.Popen(["open", url])
-                elif plat == "Linux":
-                    subprocess.Popen(["x-www-browser", url])
-    
-            # Check for ENTER
-            elif c == ord('\n'):
-                stdscr.clear()
-                stdscr.refresh()
-                post_summary_obj = summaries[i]
-                id_num = post_summary_obj['id']
-                post_obj = network.get_post(id_num)
-                post_viewer.view_post(post_obj, network, stdscr)
-                render(pads[i:], stdscr)
-    
-            # Scroll down
-            elif c == ord('j') or c == curses.KEY_DOWN:
-                post = unsaved_post if unsaved_post else feed.next_post()
-                unsaved_post = None
-                if post:
-                    subject = html_parse.format_unicode_html(post['subject'])
-                    contents = html_parse.format_unicode_html(post['content_snipet'])
-                    summaries.append(post)
-                    data.append((subject, contents))
-                    pads.append(summary_pad(subject, contents, stdscr))
+    stdscr.nodelay(False) # getch is non-blocking
+    render(pads, i, stdscr)
+    while True:
+        c = stdscr.getch()
+
+        # Quit the program
+        if c == ord('q') or c == curses.KEY_BACKSPACE:
+            break
+        
+        elif c == ord('i'):
+            url = "https://piazza.com/class/" + network._nid + "?cid=" + summaries[i]['id']
+            plat = platform.system()
+            if plat == "Windows":
+                subprocess.Popen(["explorer", url])
+            elif plat == "Darwin":
+                subprocess.Popen(["open", url])
+            elif plat == "Linux":
+                subprocess.Popen(["x-www-browser", url])
+
+        # Check for ENTER
+        elif c == ord('\n'):
+            stdscr.clear()
+            stdscr.refresh()
+            post_summary_obj = summaries[i]
+            id_num = post_summary_obj['id']
+            post_obj = network.get_post(id_num)
+            post_viewer.view_post(post_obj, network, stdscr)
+            pads = remake_pads(summaries, stdscr, i)
+
+        # Scroll down
+        elif c == ord('j') or c == curses.KEY_DOWN:
+            post = unsaved_post if unsaved_post else feed.next_post()
+            unsaved_post = None
+            if post:
+                subject = utils.format_html(post['subject'])
+                contents = utils.format_html(post['content_snipet'])
+                summaries.append(post)
+                data.append((subject, contents))
+                pads.append(summary_pad(subject, contents, stdscr))
+            if i < len(pads) - 1:
                 pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
                 i += 1
-                if i >= len(pads):
-                    i = len(pads) - 1
-                stdscr.erase()
-                stdscr.refresh()
                 pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
-                render(pads[i:], stdscr)
-    
-            # Scroll up
-            elif c == ord('k') or c == curses.KEY_UP:
-                pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
-                i -= 1
-                if(i < 0):
-                    i = 0
-                stdscr.erase()
-                stdscr.refresh()
-                pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
-                render(pads[i:], stdscr)
-    
-            # Check for window resize
-            if c == curses.KEY_RESIZE:
-                stdscr.erase()
-                stdscr.refresh()
-                pads = remake_pads(summaries, stdscr)
-                render(pads[i:], stdscr)
-    except:
-        error = traceback.format_exc()
-    
-    # Termination
-    curses.nocbreak()
-    stdscr.keypad(0)
-    curses.echo()
-    curses.endwin()
-    
-    if error:
-        print error
+
+        # Scroll up
+        elif (c == ord('k') or c == curses.KEY_UP) and i > 0:
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr)
+            i -= 1
+            pads[i] = summary_pad(data[i][0], data[i][1], stdscr, True)
+
+        # Check for window resize
+        if c == curses.KEY_RESIZE:
+            stdscr.erase()
+            stdscr.refresh()
+            pads = remake_pads(summaries, stdscr, i)
+            
+        render(pads, i, stdscr)

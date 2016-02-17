@@ -5,8 +5,7 @@ import argparse
 import pickle
 import os
 import getpass
-import html_parse
-import text_formatting
+import curses
 from feed_processor import FeedProcessor
 from requests.packages import urllib3
 import utils
@@ -55,7 +54,7 @@ def main():
     parser = argparse.ArgumentParser(description='Process user input for piazza queries')
     parser.add_argument('-q', '--query', nargs="+")
     parser.add_argument('-t', '--tag', nargs=1)
-    parser.add_argument('-r', '--range', nargs=2)
+    #parser.add_argument('-r', '--range', nargs=2)
     parser.add_argument('-i', '--instructor-only', action='store_true')
     parser.add_argument('-p', '--pinned', action='store_true')
     parser.add_argument('-f', '--following', action='store_true')
@@ -65,7 +64,7 @@ def main():
     queryObj = QueryObj()
     queryObj.add_query(args.query)
     queryObj.add_tag(args.tag)
-    queryObj.add_time_range(args.range)
+    #queryObj.add_time_range(args.range)
     queryObj.bool_inst_notes(args.instructor_only)
     queryObj.bool_pinned(args.pinned)
     queryObj.bool_following(args.following)
@@ -103,42 +102,7 @@ def main():
     index = raw_input('Class Number: ')
     network = piazza.network(classes[int(index) - 1]['id'])
     feed_processor = FeedProcessor(network, queryObj)
-    summary_viewer.view_summaries(feed_processor, network)
-    """post = None
-
-    summary_storage = []
-    id_storage = []
-
-    for i in range(0, 3):
-        post = feed_processor.next_post()
-        if post is None:
-            print "No post."
-        else:
-            summary_storage.append((text_formatting.bold(html_parse.format_unicode_html(post['subject']).replace("\n", "")), \
-            html_parse.format_unicode_html(post['content_snipet'].replace("\n", "")+ "...")))
-            full_post = network.get_post(post['id'])
-            print(html_parse.format_unicode_html(full_post['history'][0]['subject']))
-            print(html_parse.format_unicode_html(full_post['history'][0]['content']))
-
-
-            for followup in full_post['children']:
-                # if (full_post['change_log'][p]['anon'] is not 'no'):
-                #     name = network.get_user_name(full_post['change_log'][p]['uid'])
-                # else:
-                #     name = 'Anonymous'
-                print(html_parse.format_unicode_html(name + followup['subject']))
-                # p += 1
-                for followup_child in followup['children']:
-                    if (followup_child['subject']):
-                        # if (full_post['change_log'][p]['anon'] is not 'no'):
-                        #     name = network.get_user_name(full_post['change_log'][p]['uid'])
-                        # else:
-                        #     name = 'Anonymous'
-                        print("\t" + html_parse.format_unicode_html(network.get_user_name(full_post['change_log'][p]['uid']) + followup_child['subject']))
-                        # p += 1"""
-
-    # print(id_storage)
-    # IF ENTER:
+    curses.wrapper(summary_viewer.view_summaries, feed_processor, network)
 
 
 if __name__ == '__main__':
